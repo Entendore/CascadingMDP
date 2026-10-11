@@ -1,0 +1,68 @@
+================================================================================
+CASCADING MARKOV DECISION PROCESS (CMDP) FOR AUTONOMOUS CODE GENERATION
+================================================================================
+VERSION: 1.0.0
+DATE: 2026-07-23
+
+1. EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+The Cascading Markov Decision Process (CMDP) is an autonomous software 
+engineering framework. It treats code generation as a sequential decision-making 
+process. Starting from a natural language prompt, an "Architect" breaks the 
+problem into a dependency graph. A "Coder" agent then iteratively generates 
+code snippets (Actions). An "AST Critic" and "Red Team" evaluate the snippets 
+(Reward). If the reward is positive, the system transitions to the next state; 
+if negative, it rolls back and retries.
+
+2. THE MDP FORMULATION
+--------------------------------------------------------------------------------
+- State (S_t): The current codebase (AST-parsed), the Dependency Graph, the 
+  Episodic Memory (Scratchpad), and the Git checkpoint history.
+- Action (A_t): The generation of a specific code snippet for a targeted task, 
+  constrained by the AST "Repo Map" of the current state.
+- Transition (S_t -> S_t+1): Updating the codebase, committing to Git, and 
+  updating the dependency graph.
+- Reward (R): A composite score from the AST Critic (structural validity), 
+  the Red Team (security/edge cases), and the Visual Critic (UI rendering).
+
+3. CORE FEATURES & IMPROVEMENTS
+--------------------------------------------------------------------------------
+A. AST-Driven Context & Validation (The "Repo Map")
+   - Instead of feeding raw code to the LLM, the system uses Tree-sitter/AST 
+     to strip function bodies, leaving only class definitions, signatures, and 
+     imports. This compresses a 5,000-line codebase into a 500-token "Repo Map".
+   - The AST Critic validates every generated snippet for import resolution and 
+     signature matching BEFORE execution.
+
+B. State Rollback & Checkpointing (Non-Stationary MDP)
+   - Every successful transition triggers an automatic Git commit.
+   - If a snippet fails the Critic after 3 retries, the system executes a 
+     `git checkout` to the last known good state, preventing the "snowball 
+     effect" of compounding errors.
+
+C. Episodic Memory (The Scratchpad)
+   - The agent maintains a persistent JSON scratchpad. If the Coder tries a 
+     library that fails, it logs the failure. Future prompts automatically 
+     include this scratchpad to prevent repeating mistakes.
+
+D. Multi-Agent Critic System
+   - AST Critic: Checks syntax, imports, and function signatures.
+   - Red Team Agent: Generates adversarial inputs to test edge cases.
+   - Visual Critic: (For frontend) Uses a headless browser and Vision-LLM to 
+     verify UI layouts.
+   - LLM-as-a-Judge: Verifies semantic alignment with the original prompt.
+
+E. Dynamic Re-planning
+   - If the Architect's initial plan proves unfeasible (e.g., a library lacks 
+     a feature), the system pauses, re-evaluates the dependency graph, and 
+     dynamically rewrites the remaining tasks.
+
+4. TECHNOLOGY STACK
+--------------------------------------------------------------------------------
+- Orchestration: LangGraph (for state machine management)
+- AST Parsing: Tree-sitter (Multi-language), LibCST (Python lossless edits), 
+  ts-morph (TypeScript).
+- Sandboxing: E2B or Docker (for secure code execution).
+- LLM: Claude 3.5 Sonnet / GPT-4o (Coding), Haiku / GPT-4o-mini (Critic/Architect).
+
+================================================================================
